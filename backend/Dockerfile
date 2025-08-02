@@ -1,5 +1,8 @@
 FROM oven/bun:latest
 
+# Optional: install OpenSSL
+RUN apt-get update && apt-get install -y openssl
+
 WORKDIR /app
 
 COPY package*.json ./
@@ -35,6 +38,10 @@ ARG REDIS_PORT
 ENV REDIS_PORT=${REDIS_PORT}
 ARG CLOUD_RUN_OLLAMA_URL
 ENV CLOUD_RUN_OLLAMA_URL=${CLOUD_RUN_OLLAMA_URL}
+ARG SLIPOK_API_KEY
+ENV SLIPOK_API_KEY=${SLIPOK_API_KEY}
+ARG SLIPOK_URL
+ENV SLIPOK_URL=${SLIPOK_URL}
 
 # Generate Prisma client
 RUN bun x prisma generate
