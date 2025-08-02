@@ -1,0 +1,44 @@
+@font-face {
+  font-family: "LINE Seed Sans";
+  src:
+    url("/src/assets/fonts/LINESeedSansTH_W_Rg.woff2") format("woff2"),
+    url("/src/assets/fonts/LINESeedSansTH_W_Rg.woff") format("woff");
+  font-weight: 400; /* Regular */
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "LINE Seed Sans";
+  src:
+    url("/src/assets/fonts/LINESeedSansTH_W_Th.woff2") format("woff2"),
+    url("/src/assets/fonts/LINESeedSansTH_W_Th.woff") format("woff");
+  font-weight: 300; /* Thin */
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "LINE Seed Sans";
+  src:
+    url("/src/assets/fonts/LINESeedSansTH_W_Bd.woff2") format("woff2"),
+    url("/src/assets/fonts/LINESeedSansTH_W_Bd.woff") format("woff");
+  font-weight: 700; /* Bold */
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "LINE Seed Sans";
+  src:
+    url("/src/assets/fonts/LINESeedSansTH_W_XBd.woff2") format("woff2"),
+    url("/src/assets/fonts/LINESeedSansTH_W_XBd.woff") format("woff");
+  font-weight: 800; /* Extra Bold */
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "LINE Seed Sans";
+  src:
+    url("/src/assets/fonts/LINESeedSansTH_W_He.woff2") format("woff2"),
+    url("/src/assets/fonts/LINESeedSansTH_W_He.woff") format("woff");
+  font-weight: 900; /* Heavy */
+  font-style: normal;
+}

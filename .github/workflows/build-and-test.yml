@@ -1,0 +1,47 @@
+name: Build and Test
+
+on:
+  push:
+    branches: []
+  pull_request:
+    branches: []
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      # - name: Install Ollama
+      #   run: |
+      #     curl -fsSL https://ollama.com/install.sh | sh
+      #     ollama serve &
+      #     sleep 10  # Give Ollama time to start up
+
+      # - name: Pull Qwen model
+      #   run: ollama pull qwen3:4b
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: bun install
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: bun run build
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: bun install
+
+      - name: Build backend
+        working-directory: ./backend
+        run: bun run build
+
+      - name: Run tests
+        run: bun test

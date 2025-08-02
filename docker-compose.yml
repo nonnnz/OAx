@@ -1,0 +1,119 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - FRONTEND_PORT=${FRONTEND_PORT}
+        - VITE_API_URL=${VITE_API_URL}
+        - VITE_LIFF_ID=${VITE_LIFF_ID}
+        - VITE_PUBLIC_URL=${VITE_PUBLIC_URL}
+    ports:
+      - '5174:5174'
+    depends_on:
+      - backend
+    networks:
+      - lineoa-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        - DATABASE_URL=${DATABASE_URL}
+        - PORT=${PORT}
+        - GEMINI_API_KEY=${GEMINI_API_KEY}
+        - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+        - BACKEND_URL=${BACKEND_URL}
+        - REDIS_PASSWORD=${REDIS_PASSWORD}
+        - BACKEND_PUBLIC_URL=${BACKEND_PUBLIC_URL}
+        - OPEN_SLIP_VERIFY_TOKEN=${OPEN_SLIP_VERIFY_TOKEN}
+        - FRONTEND_URL=${FRONTEND_URL}
+        - REDIS_URL=${REDIS_URL}
+        - REDIS_HOST=${REDIS_HOST}
+        - REDIS_PORT=${REDIS_PORT}
+        - CLOUD_RUN_OLLAMA_URL=${CLOUD_RUN_OLLAMA_URL}
+    ports:
+      - '3002:3002'
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - redis
+      - mongo2
+    environment:
+      - .env
+    networks:
+      - lineoa-network
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    networks:
+      - lineoa-network
+
+  # redis:
+  #   image: redis:alpine
+  #   ports:
+  #     - '6379:6379'
+  #   volumes:
+  #     - redis_data:/data
+  #   command: redis-server --requirepass ${REDIS_PASSWORD}
+
+  # mongodb:
+  #   image: mongo:latest
+  #   ports:
+  #     - '27019:27019'
+  #   volumes:
+  #     - mongodb_data:/data/db
+  #   command: mongod --replSet rs1 --port 27019 --bind_ip_all
+
+  mongo2:
+    image: mongo:latest
+    container_name: mongo2
+    ports:
+      - '27018:27017'
+    networks:
+      - lineoa-network
+    volumes:
+      - mongo2db_data:/data/db
+    command: --replSet rs0
+    restart: always
+
+  # ollama:
+  #     image: ollama/ollama:latest
+  #     ports:
+  #       - 7869:11434
+  #     environment:
+  #       - OLLAMA_KEEP_ALIVE=24h
+  #     volumes:
+  #       - ollama_data:/root/.ollama
+  #     networks:
+  #       - lineoa-network
+  #     deploy:
+  #       resources:
+  #         reservations:
+  #           devices:
+  #             - driver: nvidia
+  #               count: 1
+  #               capabilities: [gpu]
+  #     restart: unless-stopped
+  #     entrypoint: ["/bin/ollama"]
+  #     command: serve
+
+networks:
+  lineoa-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+    driver: local
+  mongo2db_data:
+    driver: local
+  # ollama_data:
+  #   driver: local

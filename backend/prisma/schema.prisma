@@ -1,0 +1,260 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+type StoreRoleInfo {
+  storeId String
+  role StoreRole
+  assignedAt DateTime
+}
+
+model User {
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  lineId    String     @unique
+  username  String
+  role      Role        @default(USER)
+  storeRoles  StoreRoleInfo[] // Store both role and metadata
+  storeIDs    String[]       @db.ObjectId
+  stores      Store[]        @relation(fields: [storeIDs], references: [id])
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+
+model Store {
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  storeName     String
+  phone         String
+  address       String
+  isCash        Boolean      @default(false)
+  openingStatus OpeningStatus
+  openingHours  OpeningHour[] 
+  accounts      Account[]
+  lineOABot     LineOABot @unique
+  products      Product[]
+  userIDs       String[]      @db.ObjectId
+  users         User[]        @relation(fields: [userIDs], references: [id])
+  orders        Order[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  isDeleted     Boolean      @default(false)
+  deletedAt     DateTime?    // Nullable field for soft delete
+}
+
+type OpeningHour {
+  dayOfWeek   DayOfWeek
+  openingTime String?
+  closingTime String?
+  closed      Boolean
+}
+
+enum OpeningStatus {
+  OPEN
+  OPEN_WITH_TIME
+  CLOSE
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+// enum bank symbol!!!
+
+type Account {
+  receiverType    String
+  receiverAccount String?
+  receiverBank    String?
+  accountNameTh   String
+  accountNameEn   String
+  promptpayId     String?
+}
+
+type LineOABot {
+  botId          String
+  basicId        String
+  displayName   String
+  channelSecret      String
+  channelAccessToken String
+}
+
+type IngredientInfo {
+  ingredientId String
+  ingredientName String
+  ingredientQuantity Float
+  ingredientUnit String
+}
+
+model Product {
+  id          String              @id @default(auto()) @map("_id") @db.ObjectId
+  store       Store               @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  storeId     String              @db.ObjectId
+  name        String
+  imageUrl    String?
+  description String?
+  price       Float
+  isActive    Boolean @default(true)
+  ingredientInfo IngredientInfo[]
+  ingredientIDs String[] @db.ObjectId
+  ingredients Ingredient[]     @relation(fields: [ingredientIDs], references: [id])
+  // orderItems  OrderItem[]
+  orderIDs    String[] @db.ObjectId
+  orders      Order[]   @relation(fields: [orderIDs], references: [id])
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+} 
+
+model Ingredient {
+  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
+  name               String
+  quantity           Float
+  unit               String             // standard unit or first created custom unit
+  receiptInfo        ReceiptInfo[]
+  receiptIDs        String[]            @db.ObjectId
+  receipts           Receipt[]          @relation(fields: [receiptIDs], references: [id])
+  productIDs        String[]            @db.ObjectId
+  products           Product[]          @relation(fields: [productIDs], references: [id])
+  orderIDs    String[] @db.ObjectId
+  orders      Order[]   @relation(fields: [orderIDs], references: [id])
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+}
+
+type ReceiptInfo {
+  receiptId             String 
+  quantity              Float    // Converted standard unit (kg, ml, etc.)
+  customUnit            String?  // e.g., "pack"
+  originalQuantity      Float?    // original quantity of receipt
+  price                 Float
+  quantityUsed          Float
+  receiptUsedOrder      ReceiptUsedOrder[]
+  isActive              Boolean @default(true)
+}
+
+type ReceiptUsedOrder {
+  orderId String
+  quantity     Float
+  price        Float
+}
+
+model Receipt {
+  id           String              @id @default(auto()) @map("_id") @db.ObjectId
+  imageUrl     String
+  store        String
+  receiptsRef  String
+  receiptsDate DateTime
+  ingredientIDs String[]            @db.ObjectId
+  ingredients  Ingredient[]         @relation(fields: [ingredientIDs], references: [id])
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+}
+
+enum OrderStatus {
+  PENDING
+  COOKING
+  COMPLETED
+  CANCELLED
+}
+
+type UsedIngredient {
+  ingredientId String
+  name         String
+  quantity     Float
+  price        Float?
+}
+
+type ProductInfo {
+  productId String
+  name String
+  quantity Float
+  price Float?
+  customization String?
+}
+
+model Order {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  store          Store        @relation(fields: [storeId], references: [id])
+  storeId        String       @db.ObjectId
+  transaction    Transaction?
+  customerLineId String
+  customerName   String
+  customerAdds   String
+  status         String // pending, completed, cancelled
+  productInfo ProductInfo[]
+  productIDs     String[]     @db.ObjectId
+  products       Product[]    @relation(fields: [productIDs], references: [id])
+  usedIngredients UsedIngredient[]
+  ingredientIDs String[]            @db.ObjectId
+  ingredients  Ingredient[]         @relation(fields: [ingredientIDs], references: [id])
+  // items          OrderItem[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Transaction {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  slip          Slip[]    
+  totalAmount   Float
+  paymentMethod String?
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId       String   @unique @db.ObjectId
+  isConfirmed   Boolean @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+type AccountInfo {
+  value String
+}
+
+type SenderReceiverInfo {
+  displayName String
+  name String
+  account AccountInfo
+}
+
+model Slip {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  success         Boolean
+  statusMessage   String
+  receivingBank   String
+  sendingBank     String
+  transDate       String
+  transTime       String
+  sender          SenderReceiverInfo
+  receiver        SenderReceiverInfo
+  amount          Float
+  isConfirmed     Boolean
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  transaction     Transaction @relation(fields: [transactionId], references: [id])
+  transactionId   String   @db.ObjectId
+  transRef        String? 
+  qrcodeData      String? 
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum StoreRole {
+  OWNER
+  STAFF
+}
